@@ -137,6 +137,8 @@ export function useTransaction() {
       try {
         console.log(`[v0] Executing step ${stepNumber} with inputs:`, userInputs)
 
+        const executionType = stepNumber === 1 ? "new" : "latest"
+
         const evaluation = await TrailAPI.getEvaluation(stepNumber, {
           walletAddress,
           userInputs: {
@@ -146,7 +148,7 @@ export function useTransaction() {
               },
             },
           },
-          execution: { type: "new" },
+          execution: { type: executionType },
         })
 
         console.log(`[v0] Evaluation response:`, evaluation)
@@ -166,7 +168,7 @@ export function useTransaction() {
           nodeId,
           transactionHash: txHash,
           walletAddress,
-          execution: { type: "new" },
+          execution: { type: executionType },
         })
 
         console.log(`[v0] Successfully saved execution for step ${stepNumber}`)
