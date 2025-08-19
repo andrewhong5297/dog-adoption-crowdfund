@@ -94,35 +94,6 @@ const AppContent = () => {
 
           {/* Community Donation Feed */}
           <CommunityFeed />
-
-          {/* Show additional tabs only when wallet is connected */}
-          {status === "connected" && (
-            <Tabs defaultValue="history" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="history" className="text-xs">
-                  <BarChart3 className="w-4 h-4 mr-1" />
-                  My History
-                </TabsTrigger>
-                <TabsTrigger value="stats" className="text-xs">
-                  <Heart className="w-4 h-4 mr-1" />
-                  Stats
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="history" className="space-y-4">
-                <UserExecutionHistory onSelectExecution={handleSelectExecution} />
-                {selectedExecutionId && (
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm text-blue-800">Using execution: {selectedExecutionId.slice(0, 8)}...</p>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="stats" className="space-y-4">
-                <StepStats />
-              </TabsContent>
-            </Tabs>
-          )}
         </div>
       </div>
 
