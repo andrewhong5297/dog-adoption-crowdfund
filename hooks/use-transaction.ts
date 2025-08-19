@@ -4,6 +4,7 @@ import { useCallback, useState } from "react"
 import { useAccount, useSendTransaction, useSwitchChain, useWaitForTransactionReceipt } from "wagmi"
 import { base } from "wagmi/chains"
 import type { EvaluationResponse } from "../lib/trail-api"
+import { TrailAPI } from "../lib/trail-api"
 
 export function useTrailTransaction() {
   const { address, status, chain } = useAccount()
@@ -133,11 +134,31 @@ export function useTransaction() {
       userInputs: { amount: number }
       walletAddress: string
     }) => {
-      // This would need to be implemented to call the trail API
-      // For now, throwing an error to indicate it needs implementation
-      throw new Error("executeTransaction not yet implemented - use TrailAPI.evaluate and submitTransaction")
+      try {
+        console.log(`[v0] Executing step ${stepNumber} with inputs:`, userInputs)
+
+        // Call TrailAPI.evaluate to get transaction calldata
+        const evaluation = await TrailAPI.evaluate({
+          stepNumber,
+          userInputs,
+          walletAddress,
+          executionId: null, // Use null for new execution
+        })
+
+        console.log(`[v0] Evaluation response:`, evaluation)
+
+        // Submit the transaction using the evaluation response
+        const txHash = await trailTransaction.submitTransaction(evaluation)
+
+        console.log(`[v0] Transaction submitted with hash:`, txHash)
+
+        return txHash
+      } catch (error) {
+        console.error(`[v0] Transaction execution failed:`, error)
+        throw error
+      }
     },
-    [],
+    [trailTransaction],
   )
 
   return {

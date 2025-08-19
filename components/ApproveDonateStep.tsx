@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAccount } from "wagmi"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { Button } from "./ui/button"
@@ -22,6 +22,10 @@ export function ApproveDonateStep({ approveStatus, donateStatus, onComplete }: A
   const { balance } = useTrail()
   const { executeTransaction, isLoading, error } = useTransaction()
   const [amount, setAmount] = useState("")
+
+  useEffect(() => {
+    console.log("[v0] Rendering balance:", balance)
+  }, [balance])
 
   const handleApprove = async () => {
     if (!amount || !address) return
@@ -80,7 +84,7 @@ export function ApproveDonateStep({ approveStatus, donateStatus, onComplete }: A
             disabled={isApproveDisabled}
             className="text-lg"
           />
-          <p className="text-xs text-gray-600">Available: {formatUSDC(address ? balance || 0 : 0)} USDC</p>
+          <p className="text-xs text-gray-600">Available: {formatUSDC(balance || 0)} USDC</p>
         </div>
 
         {/* Action Buttons */}
