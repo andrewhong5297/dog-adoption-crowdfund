@@ -7,7 +7,7 @@ import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Label } from "./ui/label"
 import { CheckCircle, DollarSign, Shield } from "lucide-react"
-import { useTrail } from "../hooks/use-trail"
+import { useUserStepFromLatestExecution } from "../hooks/use-user-step"
 import { useTransaction } from "../hooks/use-transaction"
 
 interface ApproveDonateStepProps {
@@ -16,10 +16,13 @@ interface ApproveDonateStepProps {
 
 export function ApproveDonateStep({ onComplete }: ApproveDonateStepProps) {
   const { address } = useAccount()
-  const trail = useTrail()
+  const { currentStep, refetch: refetchStep } = useUserStepFromLatestExecution()
   const { executeTransaction, isLoading, error } = useTransaction()
   const [amount, setAmount] = useState("")
   const [balance, setBalance] = useState<number | null>(null)
+
+  const hasCompletedApproval = currentStep > 1
+  const hasCompletedDonation = currentStep > 2
 
   const fetchBalance = useCallback(async () => {
     console.log("[v0] fetchBalance called, address:", address)
@@ -90,7 +93,7 @@ export function ApproveDonateStep({ onComplete }: ApproveDonateStepProps) {
         walletAddress: address,
       })
       await fetchBalance()
-      await trail.refetch()
+      await refetchStep()
       onComplete()
     } catch (error) {
       console.error("Approve failed:", error)
@@ -107,19 +110,18 @@ export function ApproveDonateStep({ onComplete }: ApproveDonateStepProps) {
         walletAddress: address,
       })
       await fetchBalance()
-      await trail.refetch()
+      await refetchStep()
       onComplete()
     } catch (error) {
       console.error("Donate failed:", error)
     }
   }
 
-  const canApprove =
-    !isLoading && amount && Number.parseFloat(amount) > 0 && Number.parseFloat(amount) <= (balance || 0)
-  const canDonate = !isLoading && amount && Number.parseFloat(amount) > 0 && Number.parseFloat(amount) <= (balance || 0)
+  const isReady = !isLoading && amount
 
-  // User can always re-approve, but donate requires approval first (unless they already completed approval)
-  const isDonateDisabled = !canDonate || (!trail.hasCompletedApproval && !isLoading)
+  const enoughBalance = Number.parseFloat(amount) > 0 && Number.parseFloat(amount) <= (balance || 0)
+
+  const isDonateDisabled = !isReady || !enoughBalance || (!hasCompletedApproval && !isLoading)
 
   return (
     <Card className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
@@ -152,10 +154,10 @@ export function ApproveDonateStep({ onComplete }: ApproveDonateStepProps) {
           {/* Approve Button */}
           <Button
             onClick={handleApprove}
-            disabled={!canApprove}
+            disabled={!isReady || !enoughBalance}
             className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white"
           >
-            {trail.hasCompletedApproval ? (
+            {hasCompletedApproval ? (
               <>
                 <CheckCircle className="w-4 h-4 mr-2" />
                 Re-approve
@@ -174,7 +176,7 @@ export function ApproveDonateStep({ onComplete }: ApproveDonateStepProps) {
             disabled={isDonateDisabled}
             className="flex-1 bg-green-600 hover:bg-green-700 text-white"
           >
-            {trail.hasCompletedDonation ? (
+            {hasCompletedDonation ? (
               <>
                 <CheckCircle className="w-4 h-4 mr-2" />
                 Donated
@@ -189,7 +191,7 @@ export function ApproveDonateStep({ onComplete }: ApproveDonateStepProps) {
         </div>
 
         {/* Status Messages */}
-        {trail.hasCompletedApproval && !trail.hasCompletedDonation && (
+        {hasCompletedApproval && !hasCompletedDonation && (
           <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-sm text-green-800">
               ✅ Approval complete! Now click "Donate" to send your contribution.
@@ -203,7 +205,7 @@ export function ApproveDonateStep({ onComplete }: ApproveDonateStepProps) {
           </div>
         )}
 
-        {!canApprove && amount && (
+        {!enoughBalance && isReady && (
           <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
             <p className="text-sm text-orange-800">Please enter a valid amount between 0 and your available balance.</p>
           </div>
