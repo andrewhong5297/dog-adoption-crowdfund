@@ -142,7 +142,7 @@ export function useTransaction() {
           userInputs: {
             [stepNumber === 1 ? "0198c2e0-a2e8-7a99-82e7-7514211a187f" : "0198c2e0-a2e7-7c59-a3a2-76c5dfa3cc33"]: {
               [stepNumber === 1 ? "inputs.value" : "inputs.amount"]: {
-                value: (userInputs.amount * Math.pow(10, 6)).toString(), // Convert to wei format
+                value: userInputs.amount,
               },
             },
           },

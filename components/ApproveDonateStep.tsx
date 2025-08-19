@@ -142,7 +142,7 @@ export function ApproveDonateStep({ approveStatus, donateStatus, onComplete }: A
             disabled={isApproveDisabled}
             className="text-lg"
           />
-          <p className="text-xs text-gray-600">Available: {formatUSDC(balance || 0)} USDC</p>
+          <p className="text-xs text-gray-600">Available: {balance} USDC</p>
         </div>
 
         {/* Action Buttons */}
