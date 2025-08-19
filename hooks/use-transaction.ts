@@ -137,12 +137,16 @@ export function useTransaction() {
       try {
         console.log(`[v0] Executing step ${stepNumber} with inputs:`, userInputs)
 
-        // Call TrailAPI.evaluate to get transaction calldata
-        const evaluation = await TrailAPI.evaluate({
-          stepNumber,
-          userInputs,
+        const evaluation = await TrailAPI.getEvaluation(stepNumber, {
           walletAddress,
-          executionId: null, // Use null for new execution
+          userInputs: {
+            [stepNumber === 1 ? "0198c2e0-a2e8-7a99-82e7-7514211a187f" : "0198c2e0-a2e7-7c59-a3a2-76c5dfa3cc33"]: {
+              [stepNumber === 1 ? "inputs.value" : "inputs.amount"]: {
+                value: (userInputs.amount * Math.pow(10, 6)).toString(), // Convert to wei format
+              },
+            },
+          },
+          execution: { type: "new" },
         })
 
         console.log(`[v0] Evaluation response:`, evaluation)
@@ -151,6 +155,13 @@ export function useTransaction() {
         const txHash = await trailTransaction.submitTransaction(evaluation)
 
         console.log(`[v0] Transaction submitted with hash:`, txHash)
+
+        await TrailAPI.saveExecution({
+          nodeId: stepNumber === 1 ? "0198c2e0-a2e8-7a99-82e7-7514211a187f" : "0198c2e0-a2e7-7c59-a3a2-76c5dfa3cc33",
+          transactionHash: txHash,
+          walletAddress,
+          execution: { type: "new" },
+        })
 
         return txHash
       } catch (error) {

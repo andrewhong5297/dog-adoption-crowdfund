@@ -7,7 +7,6 @@ import { TrailAPI, type ExecutionQueryResponse, type UserInputs } from "../lib/t
 export interface TrailState {
   currentStep: number
   executions: ExecutionQueryResponse | null
-  balance: number | null
   loading: boolean
   error: string | null
 }
@@ -17,7 +16,6 @@ export function useTrail() {
   const [state, setState] = useState<TrailState>({
     currentStep: 1,
     executions: null,
-    balance: null,
     loading: false,
     error: null,
   })
@@ -59,69 +57,22 @@ export function useTrail() {
     }
   }, [address])
 
-  // Fetch balance
-  const fetchBalance = useCallback(async () => {
-    console.log("[v0] fetchBalance called, address:", address)
-    if (!address) {
-      console.log("[v0] No address, setting balance to null")
-      setState((prev) => ({ ...prev, balance: null }))
-      return
-    }
-
-    try {
-      console.log("[v0] Fetching balance for address:", address)
-      const response = await fetch(
-        `https://trails-api.herd.eco/v1/trails/0198c2e0-a2d8-76d3-bfe1-3c9191ebd378/versions/0198c2e0-a2e1-79cb-9c8f-1ea675b21ce7/nodes/0198c2e0-a2e8-7a99-82e7-75138a5f58ad/read`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Herd-Trail-App-Id": "0198c2df-d48c-7f25-aae1-873d55126415",
-          },
-          body: JSON.stringify({
-            walletAddress: address,
-            userInputs: {},
-            execution: {
-              type: "latest",
-            },
-          }),
-        },
-      )
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const data = await response.json()
-      console.log("[v0] Balance API response:", data)
-      const balanceValue = Number.parseInt(data.outputs.arg_0.value) / 1000000 // Convert from wei to USDC (6 decimals)
-      console.log("[v0] Parsed balance value:", balanceValue)
-
-      setState((prev) => ({ ...prev, balance: balanceValue }))
-    } catch (error) {
-      console.error("Failed to fetch balance:", error)
-      setState((prev) => ({ ...prev, balance: 0 }))
-    }
-  }, [address])
-
   // Fetch executions when address changes
   useEffect(() => {
     console.log("[v0] useEffect triggered, address:", address)
     if (address) {
-      console.log("[v0] Address exists, fetching executions and balance")
+      console.log("[v0] Address exists, fetching executions")
       fetchExecutions()
-      fetchBalance()
     } else {
       console.log("[v0] No address, resetting state")
       setState({
         currentStep: 1,
         executions: null,
-        balance: null,
         loading: false,
         error: null,
       })
     }
-  }, [address, fetchExecutions, fetchBalance])
+  }, [address, fetchExecutions])
 
   // Submit a step transaction
   const submitStep = useCallback(
@@ -203,6 +154,5 @@ export function useTrail() {
     saveTransaction,
     readNode,
     refetch: fetchExecutions,
-    refetchBalance: fetchBalance,
   }
 }
