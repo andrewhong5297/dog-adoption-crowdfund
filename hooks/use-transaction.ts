@@ -119,3 +119,31 @@ export function useTrailTransaction() {
     clearTransaction,
   }
 }
+
+export function useTransaction() {
+  const trailTransaction = useTrailTransaction()
+
+  const executeTransaction = useCallback(
+    async ({
+      stepNumber,
+      userInputs,
+      walletAddress,
+    }: {
+      stepNumber: number
+      userInputs: { amount: number }
+      walletAddress: string
+    }) => {
+      // This would need to be implemented to call the trail API
+      // For now, throwing an error to indicate it needs implementation
+      throw new Error("executeTransaction not yet implemented - use TrailAPI.evaluate and submitTransaction")
+    },
+    [],
+  )
+
+  return {
+    executeTransaction,
+    isLoading: trailTransaction.isPending,
+    error: trailTransaction.txError?.message || null,
+    ...trailTransaction,
+  }
+}

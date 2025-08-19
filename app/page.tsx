@@ -4,16 +4,14 @@ import { useState, useEffect } from "react"
 import { Web3Provider } from "../components/Web3Provider"
 import { FarcasterConnect } from "../components/FarcasterConnect"
 import { CrowdfundProgress } from "../components/CrowdfundProgress"
-import { ApproveStep } from "../components/ApproveStep"
-import { DonateStep } from "../components/DonateStep"
-import { RefundStep } from "../components/RefundStep"
+import { ApproveDonateStep } from "../components/ApproveDonateStep"
 import { CommunityFeed } from "../components/CommunityFeed"
 import { UserExecutionHistory } from "../components/UserExecutionHistory"
 import { StepStats } from "../components/StepStats"
 import { sdk } from "@farcaster/miniapp-sdk"
 import { useAccount } from "wagmi"
 import { useTrail } from "../hooks/use-trail"
-import { Heart, DollarSign, BarChart3 } from "lucide-react"
+import { Heart, BarChart3 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 
 // AppContent must be inside Web3Provider to use wagmi hooks
@@ -86,58 +84,46 @@ const AppContent = () => {
           <CrowdfundProgress />
         </div>
 
-        {status === "connected" ? (
-          <Tabs defaultValue="donate" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="donate" className="text-xs">
-                <DollarSign className="w-4 h-4 mr-1" />
-                Donate
-              </TabsTrigger>
-              <TabsTrigger value="community" className="text-xs">
-                <Heart className="w-4 h-4 mr-1" />
-                Community
-              </TabsTrigger>
-              <TabsTrigger value="history" className="text-xs">
-                <BarChart3 className="w-4 h-4 mr-1" />
-                Stats
-              </TabsTrigger>
-            </TabsList>
+        <div className="space-y-6">
+          {/* Donation Step */}
+          <ApproveDonateStep
+            approveStatus={address ? getStepStatus(1) : "disabled"}
+            donateStatus={address ? getStepStatus(2) : "disabled"}
+            onComplete={handleStepComplete}
+          />
 
-            <TabsContent value="donate" className="space-y-4">
-              <ApproveStep status={getStepStatus(1)} onComplete={handleStepComplete} />
-              <DonateStep status={getStepStatus(2)} onComplete={handleStepComplete} />
-              <RefundStep status={getStepStatus(3)} onComplete={handleStepComplete} />
-            </TabsContent>
+          {/* Community Donation Feed */}
+          <CommunityFeed />
 
-            <TabsContent value="community" className="space-y-4">
-              <CommunityFeed />
-              <StepStats />
-            </TabsContent>
+          {/* Show additional tabs only when wallet is connected */}
+          {status === "connected" && (
+            <Tabs defaultValue="history" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="history" className="text-xs">
+                  <BarChart3 className="w-4 h-4 mr-1" />
+                  My History
+                </TabsTrigger>
+                <TabsTrigger value="stats" className="text-xs">
+                  <Heart className="w-4 h-4 mr-1" />
+                  Stats
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="history" className="space-y-4">
-              <UserExecutionHistory onSelectExecution={handleSelectExecution} />
-              {selectedExecutionId && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800">Using execution: {selectedExecutionId.slice(0, 8)}...</p>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        ) : (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <DollarSign className="w-8 h-8 text-blue-600" />
-              </div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Help Save Dogs</h2>
-              <p className="text-gray-600 text-sm mb-4">
-                Support the Brooklyn Animal Care Centers by contributing to our crowdfund campaign. Every donation helps
-                provide care, shelter, and love for dogs in need.
-              </p>
-              <p className="text-gray-600 text-sm">Connect your Farcaster wallet to start donating</p>
-            </div>
-          </div>
-        )}
+              <TabsContent value="history" className="space-y-4">
+                <UserExecutionHistory onSelectExecution={handleSelectExecution} />
+                {selectedExecutionId && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">Using execution: {selectedExecutionId.slice(0, 8)}...</p>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="stats" className="space-y-4">
+                <StepStats />
+              </TabsContent>
+            </Tabs>
+          )}
+        </div>
       </div>
 
       {/* Footer */}

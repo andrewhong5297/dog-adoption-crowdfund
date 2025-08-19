@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { Progress } from "./ui/progress"
-import { Users, Target, Clock } from "lucide-react"
-import { useTrail } from "../hooks/use-trail"
-import { formatUSDC, formatTimestamp } from "../lib/trail-api"
+import { Target, Clock, Users } from "lucide-react"
+import { formatUSDC } from "../lib/trail-api"
+
+// API documentation: https://trails-api.herd.eco/v1/trails/0198c2e0-a2d8-76d3-bfe1-3c9191ebd378/versions/0198c2e0-a2e1-79cb-9c8f-1ea675b21ce7/guidebook.txt?trailAppId=0198a42e-6183-745a-abca-cb89fd695d50
 
 interface CrowdfundData {
   goal: string
@@ -16,45 +17,73 @@ interface CrowdfundData {
   cancelled: boolean
 }
 
-interface CrowdfundStats {
-  donorsCount: string
-  userDonation: string
-}
-
 export function CrowdfundProgress() {
-  const { readNode } = useTrail()
   const [crowdfundData, setCrowdfundData] = useState<CrowdfundData | null>(null)
-  const [stats, setStats] = useState<CrowdfundStats | null>(null)
+  const [donorCount, setDonorCount] = useState<number>(0)
   const [loading, setLoading] = useState(true)
+  const [timeLeft, setTimeLeft] = useState<string>("")
 
   useEffect(() => {
     const fetchCrowdfundData = async () => {
       try {
         setLoading(true)
 
-        // Read crowdfund details
-        const crowdfundResponse = await readNode("0198c2e0-a2e8-7a99-82e7-7515c48438b0")
-        const crowdfundOutputs = crowdfundResponse.outputs.arg_0.value
+        // Read crowdfund details using null address (works without wallet connection)
+        const crowdfundResponse = await fetch(
+          `https://trails-api.herd.eco/v1/trails/0198c2e0-a2d8-76d3-bfe1-3c9191ebd378/versions/0198c2e0-a2e1-79cb-9c8f-1ea675b21ce7/nodes/0198c2e0-a2e8-7a99-82e7-7515c48438b0/read`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Herd-Trail-App-Id": "0198c2df-d48c-7f25-aae1-873d55126415", // Required trail app id
+            },
+            body: JSON.stringify({
+              walletAddress: "0x0000000000000000000000000000000000000000", // null address
+              userInputs: {},
+              execution: {
+                type: "new",
+              },
+            }),
+          },
+        )
 
-        const crowdfundData: CrowdfundData = {
-          goal: crowdfundOutputs[0].value, // goal (uint128 with 6 decimals)
-          totalRaised: crowdfundOutputs[1].value, // totalRaised (uint128 with 6 decimals)
-          endTimestamp: Number.parseInt(crowdfundOutputs[2].value), // endTimestamp (uint64)
-          creator: crowdfundOutputs[4].value, // creator (address)
-          fundsClaimed: crowdfundOutputs[5].value, // fundsClaimed (bool)
-          cancelled: crowdfundOutputs[6].value, // cancelled (bool)
+        // Read donor count using null address
+        const donorResponse = await fetch(
+          `https://trails-api.herd.eco/v1/trails/0198c2e0-a2d8-76d3-bfe1-3c9191ebd378/versions/0198c2e0-a2e1-79cb-9c8f-1ea675b21ce7/nodes/0198c2e0-a2e9-7497-8e7e-9e8feb56f554/read`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Herd-Trail-App-Id": "0198c2df-d48c-7f25-aae1-873d55126415", // Required trail app id
+            },
+            body: JSON.stringify({
+              walletAddress: "0x0000000000000000000000000000000000000000", // null address
+              userInputs: {},
+              execution: {
+                type: "new",
+              },
+            }),
+          },
+        )
+
+        if (!crowdfundResponse.ok || !donorResponse.ok) {
+          throw new Error(`HTTP error! status: ${crowdfundResponse.status} / ${donorResponse.status}`)
         }
 
-        setCrowdfundData(crowdfundData)
+        const crowdfundData = await crowdfundResponse.json()
+        const donorData = await donorResponse.json()
 
-        // Read donors count
-        const donorsResponse = await readNode("0198c2e0-a2e9-7497-8e7e-9e8feb56f554")
-        const donorsCount = donorsResponse.outputs.arg_0.value
+        const processedCrowdfundData: CrowdfundData = {
+          goal: crowdfundData.outputs.goal.value,
+          totalRaised: crowdfundData.outputs.totalRaised.value,
+          endTimestamp: Number.parseInt(crowdfundData.outputs.endTimestamp.value),
+          creator: crowdfundData.outputs.creator.value,
+          fundsClaimed: crowdfundData.outputs.fundsClaimed.value,
+          cancelled: crowdfundData.outputs.cancelled.value,
+        }
 
-        setStats({
-          donorsCount,
-          userDonation: "0", // Will be updated when user connects wallet
-        })
+        setCrowdfundData(processedCrowdfundData)
+        setDonorCount(Number.parseInt(donorData.outputs.arg_0.value))
       } catch (error) {
         console.error("Failed to fetch crowdfund data:", error)
       } finally {
@@ -63,7 +92,38 @@ export function CrowdfundProgress() {
     }
 
     fetchCrowdfundData()
-  }, [readNode])
+  }, [])
+
+  useEffect(() => {
+    if (!crowdfundData) return
+
+    const updateTimeLeft = () => {
+      const now = Math.floor(Date.now() / 1000)
+      const timeRemaining = crowdfundData.endTimestamp - now
+
+      if (timeRemaining <= 0) {
+        setTimeLeft("Ended")
+        return
+      }
+
+      const days = Math.floor(timeRemaining / (24 * 60 * 60))
+      const hours = Math.floor((timeRemaining % (24 * 60 * 60)) / (60 * 60))
+      const minutes = Math.floor((timeRemaining % (60 * 60)) / 60)
+
+      if (days > 0) {
+        setTimeLeft(`${days}d ${hours}h`)
+      } else if (hours > 0) {
+        setTimeLeft(`${hours}h ${minutes}m`)
+      } else {
+        setTimeLeft(`${minutes}m`)
+      }
+    }
+
+    updateTimeLeft()
+    const interval = setInterval(updateTimeLeft, 1000)
+
+    return () => clearInterval(interval)
+  }, [crowdfundData])
 
   if (loading) {
     return (
@@ -119,18 +179,18 @@ export function CrowdfundProgress() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
-            <Users className="w-4 h-4 text-blue-600" />
+          <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
+            <Users className="w-4 h-4 text-purple-600" />
             <div>
               <p className="text-xs text-gray-600">Donors</p>
-              <p className="font-semibold">{stats?.donorsCount || "0"}</p>
+              <p className="font-semibold">{donorCount}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
             <Clock className="w-4 h-4 text-green-600" />
             <div>
-              <p className="text-xs text-gray-600">Ends</p>
-              <p className="font-semibold text-xs">{formatTimestamp(crowdfundData.endTimestamp)}</p>
+              <p className="text-xs text-gray-600">Time Left</p>
+              <p className="font-semibold text-xs">{timeLeft}</p>
             </div>
           </div>
         </div>
@@ -141,9 +201,7 @@ export function CrowdfundProgress() {
             <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">Goal Reached!</div>
           ) : isActive ? (
             <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">Active Campaign</div>
-          ) : (
-            <div className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">Campaign Ended</div>
-          )}
+          ) : null}
         </div>
       </CardContent>
     </Card>

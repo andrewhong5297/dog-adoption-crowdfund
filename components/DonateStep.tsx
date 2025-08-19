@@ -7,7 +7,7 @@ import { StepCard } from "./StepCard"
 import { TransactionStatus } from "./TransactionStatus"
 import { useTrail } from "../hooks/use-trail"
 import { useTrailTransaction } from "../hooks/use-transaction"
-import { formatUSDC, TRAIL_STEPS } from "../lib/trail-api"
+import { TRAIL_STEPS } from "../lib/trail-api"
 import { DollarSign, Heart } from "lucide-react"
 
 interface DonateStepProps {
@@ -30,7 +30,7 @@ export function DonateStep({ status, onComplete }: DonateStepProps) {
       try {
         const donationResponse = await readNode("0198c2e0-a2e7-7c59-a3a2-76c43f6028e2")
         const donationValue = donationResponse.outputs.arg_0.value
-        setUserDonation(formatUSDC(donationValue, 6))
+        setUserDonation(donationValue)
       } catch (error) {
         console.error("Failed to fetch user donation:", error)
       }

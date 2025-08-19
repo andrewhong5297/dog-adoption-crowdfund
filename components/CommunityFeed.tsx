@@ -5,32 +5,87 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
-import { Users, TrendingUp, ExternalLink, RefreshCw } from "lucide-react"
-import { TrailAPI, formatTimestamp, type ExecutionQueryResponse } from "../lib/trail-api"
+import { Heart, DollarSign, ExternalLink, RefreshCw } from "lucide-react"
+import { TrailAPI, formatTimestamp, formatUSDC } from "../lib/trail-api"
+
+interface DonationData {
+  walletAddress: string
+  amount: string
+  txHash: string
+  blockTimestamp: number
+  farcasterData?: {
+    username: string
+    display_name: string
+    pfp_url: string
+  }
+}
 
 export function CommunityFeed() {
-  const [executions, setExecutions] = useState<ExecutionQueryResponse | null>(null)
+  const [donations, setDonations] = useState<DonationData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchCommunityData = async () => {
+  const fetchDonationData = async () => {
     try {
       setLoading(true)
       setError(null)
 
-      // Get all executions (no wallet filter to see community activity)
-      const response = await TrailAPI.queryExecutions({ walletAddresses: [] })
-      setExecutions(response)
+      const donateResponse = await fetch("https://trails-api.herd.eco/v1/read", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Herd-Trail-App-Id": "0198c2df-d48c-7f25-aae1-873d55126415",
+        },
+        body: JSON.stringify({
+          nodeId: "0198c2e0-a2e9-7497-8e7e-9e8feb56f554", // donate read node
+          walletAddress: "0x0000000000000000000000000000000000000000",
+          execution: { type: "new" },
+        }),
+      })
+
+      if (!donateResponse.ok) {
+        throw new Error(`HTTP error! status: ${donateResponse.status}`)
+      }
+
+      const donateData = await donateResponse.json()
+
+      // Get execution history to match donations with transaction data
+      const executionsResponse = await TrailAPI.queryExecutions({ walletAddresses: [] })
+
+      const donationAmounts = donateData.outputs?.arg_0 || []
+      const donationWallets = donateData.outputs?.arg_1 || []
+
+      // Get step 2 (donate) transactions from execution history
+      const donateTransactions = executionsResponse.totals.stepStats?.["2"]?.transactionHashes || []
+
+      const combinedDonations: DonationData[] = donateTransactions
+        .map((tx, index) => {
+          const walletIndex = donationWallets.findIndex(
+            (wallet: string) => wallet.toLowerCase() === tx.walletAddress.toLowerCase(),
+          )
+
+          return {
+            walletAddress: tx.walletAddress,
+            amount: walletIndex >= 0 ? donationAmounts[walletIndex] : "0",
+            txHash: tx.txHash,
+            blockTimestamp: tx.blockTimestamp,
+            farcasterData: tx.farcasterData,
+          }
+        })
+        .filter((donation) => donation.amount !== "0")
+        .sort((a, b) => b.blockTimestamp - a.blockTimestamp)
+
+      setDonations(combinedDonations)
     } catch (error) {
-      console.error("Failed to fetch community data:", error)
-      setError(error instanceof Error ? error.message : "Failed to load community data")
+      console.error("Failed to fetch donation data:", error)
+      setError(error instanceof Error ? error.message : "Failed to load donation data")
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchCommunityData()
+    fetchDonationData()
   }, [])
 
   if (loading) {
@@ -62,7 +117,7 @@ export function CommunityFeed() {
         <CardContent className="p-6">
           <div className="text-center">
             <p className="text-red-600 text-sm mb-4">{error}</p>
-            <Button onClick={fetchCommunityData} variant="outline" size="sm">
+            <Button onClick={fetchDonationData} variant="outline" size="sm">
               <RefreshCw className="w-4 h-4 mr-2" />
               Retry
             </Button>
@@ -71,21 +126,6 @@ export function CommunityFeed() {
       </Card>
     )
   }
-
-  if (!executions) return null
-
-  // Get recent activity from all steps (excluding step 0)
-  const recentActivity = Object.entries(executions.totals.stepStats || {})
-    .filter(([stepNum]) => stepNum !== "0") // Filter out step 0
-    .flatMap(([stepNum, stats]) =>
-      stats.transactionHashes.map((tx) => ({
-        ...tx,
-        stepNumber: Number.parseInt(stepNum),
-        stepName: stepNum === "1" ? "Approved USDC" : stepNum === "2" ? "Donated" : "Claimed Refund",
-      })),
-    )
-    .sort((a, b) => b.blockTimestamp - a.blockTimestamp)
-    .slice(0, 10) // Show last 10 activities
 
   const getAvatarFallback = (address: string) => {
     // Generate consistent color based on address
@@ -102,89 +142,73 @@ export function CommunityFeed() {
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-blue-600" />
-            Community Activity
+            <Heart className="w-5 h-5 text-red-500" />
+            Recent Donations
           </div>
-          <Button onClick={fetchCommunityData} variant="ghost" size="sm">
+          <Button onClick={fetchDonationData} variant="ghost" size="sm">
             <RefreshCw className="w-4 h-4" />
           </Button>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Community Stats */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-3 bg-blue-50 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">{executions.totals.wallets}</div>
-            <div className="text-xs text-blue-700">Total Participants</div>
-          </div>
-          <div className="text-center p-3 bg-green-50 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">{executions.totals.transactions}</div>
-            <div className="text-xs text-green-700">Total Transactions</div>
-          </div>
-        </div>
-
-        {/* Recent Activity Feed */}
-        <div className="space-y-3">
-          <h4 className="font-medium text-gray-900 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4" />
-            Recent Activity
-          </h4>
-
-          {recentActivity.length === 0 ? (
-            <p className="text-gray-500 text-sm text-center py-4">No recent activity</p>
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {donations.length === 0 ? (
+            <p className="text-gray-500 text-sm text-center py-4">No donations yet</p>
           ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {recentActivity.map((activity, index) => (
-                <div key={`${activity.txHash}-${index}`} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
-                  <Avatar className="w-8 h-8">
-                    {activity.farcasterData?.pfp_url ? (
-                      <AvatarImage
-                        src={activity.farcasterData.pfp_url || "/placeholder.svg"}
-                        alt={activity.farcasterData.username}
-                      />
-                    ) : null}
-                    <AvatarFallback className={`text-white text-xs ${getAvatarFallback(activity.walletAddress)}`}>
-                      {activity.farcasterData?.username?.[0]?.toUpperCase() ||
-                        `${activity.walletAddress.slice(2, 4).toUpperCase()}`}
-                    </AvatarFallback>
-                  </Avatar>
+            donations.map((donation, index) => (
+              <div
+                key={`${donation.txHash}-${index}`}
+                className="flex items-center gap-3 p-3 bg-gradient-to-r from-red-50 to-pink-50 rounded-lg border border-red-100"
+              >
+                <Avatar className="w-10 h-10">
+                  {donation.farcasterData?.pfp_url ? (
+                    <AvatarImage
+                      src={donation.farcasterData.pfp_url || "/placeholder.svg"}
+                      alt={donation.farcasterData.username}
+                    />
+                  ) : null}
+                  <AvatarFallback className={`text-white text-xs ${getAvatarFallback(donation.walletAddress)}`}>
+                    {donation.farcasterData?.username?.[0]?.toUpperCase() ||
+                      `${donation.walletAddress.slice(2, 4).toUpperCase()}`}
+                  </AvatarFallback>
+                </Avatar>
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      {activity.farcasterData ? (
-                        <a
-                          href={getFarcasterProfileUrl(activity.farcasterData.username)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-medium text-blue-600 hover:text-blue-800 text-sm truncate"
-                        >
-                          {activity.farcasterData.display_name || activity.farcasterData.username}
-                        </a>
-                      ) : (
-                        <span className="font-medium text-gray-900 text-sm">
-                          {activity.walletAddress.slice(0, 6)}...{activity.walletAddress.slice(-4)}
-                        </span>
-                      )}
-                      <Badge variant="secondary" className="text-xs">
-                        {activity.stepName}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <span>{formatTimestamp(activity.blockTimestamp)}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    {donation.farcasterData ? (
                       <a
-                        href={getHerdExplorerUrl(activity.txHash)}
+                        href={getFarcasterProfileUrl(donation.farcasterData.username)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1 hover:text-blue-600"
+                        className="font-medium text-gray-900 hover:text-blue-600 text-sm truncate"
                       >
-                        <ExternalLink className="w-3 h-3" />
-                        View
+                        {donation.farcasterData.display_name || donation.farcasterData.username}
                       </a>
-                    </div>
+                    ) : (
+                      <span className="font-medium text-gray-900 text-sm">
+                        {donation.walletAddress.slice(0, 6)}...{donation.walletAddress.slice(-4)}
+                      </span>
+                    )}
+                    <Badge variant="secondary" className="bg-green-100 text-green-800 font-semibold">
+                      <DollarSign className="w-3 h-3 mr-1" />
+                      {formatUSDC(donation.amount)}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span>{formatTimestamp(donation.blockTimestamp)}</span>
+                    <a
+                      href={getHerdExplorerUrl(donation.txHash)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 hover:text-blue-600"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      View
+                    </a>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))
           )}
         </div>
       </CardContent>
