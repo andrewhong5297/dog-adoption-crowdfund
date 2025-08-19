@@ -82,7 +82,7 @@ export function useTrail() {
             walletAddress: address,
             userInputs: {},
             execution: {
-              type: "new",
+              type: "latest",
             },
           }),
         },
