@@ -1,0 +1,22 @@
+{
+  "frame": {
+    "version": "1",
+    "name": "Brooklyn ACC Dog Crowdfund",
+    "iconUrl": "https://your-domain.com/api/og/icon",
+    "homeUrl": "https://your-domain.com",
+    "imageUrl": "https://your-domain.com/api/og/image",
+    "buttonTitle": "Help Save Dogs",
+    "splashImageUrl": "https://your-domain.com/api/og/splash",
+    "splashBackgroundColor": "#3B82F6",
+    "webhookUrl": "https://your-domain.com/api/webhook",
+    "subtitle": "Community-driven dog rescue crowdfunding",
+    "description": "Help save dogs at Brooklyn Animal Care Centers through community-driven crowdfunding. Donate with USDC and make a difference in dogs' lives.",
+    "primaryCategory": "social",
+    "tags": ["crowdfunding", "dogs", "rescue", "brooklyn", "donation", "usdc"],
+    "heroImageUrl": "https://your-domain.com/api/og/image",
+    "tagline": "Save Brooklyn ACC Dogs Together",
+    "ogTitle": "Brooklyn ACC Dog Crowdfund",
+    "ogDescription": "Help save dogs at Brooklyn Animal Care Centers through community-driven crowdfunding",
+    "ogImageUrl": "https://your-domain.com/api/og/image"
+  }
+}

@@ -7,6 +7,21 @@ import { Toaster } from "../components/Toaster"
 
 const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000"
 
+const frameEmbed = {
+  version: "next",
+  imageUrl: `${baseUrl}/api/og/image`,
+  button: {
+    title: "Help Save Dogs",
+    action: {
+      type: "launch_frame",
+      name: "Brooklyn ACC Dog Crowdfund",
+      url: baseUrl,
+      splashImageUrl: `${baseUrl}/api/og/splash`,
+      splashBackgroundColor: "#3B82F6",
+    },
+  },
+}
+
 export const metadata: Metadata = {
   title: "Brooklyn ACC Dog Crowdfund",
   description:
@@ -36,11 +51,7 @@ export const metadata: Metadata = {
     images: ["/api/og/image"],
   },
   other: {
-    "fc:frame": "vNext",
-    "fc:frame:image": `${baseUrl}/api/og/image`,
-    "fc:frame:button:1": "Open App",
-    "fc:frame:button:1:action": "link",
-    "fc:frame:button:1:target": baseUrl,
+    "fc:frame": JSON.stringify(frameEmbed),
   },
 }
 
@@ -52,11 +63,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta name="fc:frame" content="vNext" />
-        <meta name="fc:frame:image" content={`${baseUrl}/api/og/image`} />
-        <meta name="fc:frame:button:1" content="Open App" />
-        <meta name="fc:frame:button:1:action" content="link" />
-        <meta name="fc:frame:button:1:target" content={baseUrl} />
+        <meta name="fc:frame" content={JSON.stringify(frameEmbed)} />
 
         {/* Miniapp specific meta tags */}
         <meta name="fc:frame:image:aspect_ratio" content="1.91:1" />

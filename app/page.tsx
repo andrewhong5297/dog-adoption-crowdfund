@@ -6,7 +6,7 @@ import { FarcasterConnect } from "../components/FarcasterConnect"
 import { CrowdfundProgress } from "../components/CrowdfundProgress"
 import { ApproveDonateStep } from "../components/ApproveDonateStep"
 import { CommunityFeed } from "../components/CommunityFeed"
-import { sdk } from "@farcaster/miniapp-sdk"
+import { sdk } from "@farcaster/frame-sdk"
 import { useAccount } from "wagmi"
 import { useTrail } from "../hooks/use-trail"
 import { Heart } from "lucide-react"
@@ -23,9 +23,9 @@ const AppContent = () => {
         try {
           await sdk.actions.ready()
           setIsAppReady(true)
-          console.log("App marked as ready!")
+          console.log("[v0] App marked as ready for Farcaster client!")
         } catch (error) {
-          console.error("Failed to mark app as ready:", error)
+          console.error("[v0] Failed to mark app as ready:", error)
           setIsAppReady(true)
         }
       }
@@ -44,7 +44,7 @@ const AppContent = () => {
 
   const handleSelectExecution = (executionId: string) => {
     setSelectedExecutionId(executionId)
-    console.log("Selected execution:", executionId)
+    console.log("[v0] Selected execution:", executionId)
   }
 
   return (

@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@farcaster/frame-sdk": "latest",
     "@farcaster/miniapp-sdk": "latest",
     "@farcaster/miniapp-wagmi-connector": "latest",
     "@hookform/resolvers": "^3.10.0",
