@@ -32,22 +32,27 @@ export function useUserStepFromLatestExecution() {
       )
 
       if (userExecution && userExecution.executions.length > 0) {
-        const latestExecution = userExecution.executions[userExecution.executions.length - 1]
+        const latestExecution = userExecution.executions[0] // executions are sorted by most recent first
+        const steps = latestExecution.steps || []
 
-        // Filter out step 0 (trail start markers) and get completed steps
-        const completedSteps = latestExecution.steps.filter(
-          (step) =>
-            step.stepNumber > 0 && step.txHash !== "0x0000000000000000000000000000000000000000000000000000000000000000",
-        )
+        // Find the highest step number that has been completed (excluding step 0)
+        const completedStepNumbers = steps.map((step) => step.stepNumber).filter((stepNum) => stepNum > 0)
 
-        // Get the max step number from completed steps
-        const maxCompletedStep =
-          completedSteps.length > 0 ? Math.max(...completedSteps.map((step) => step.stepNumber)) : 0
+        const maxCompletedStep = completedStepNumbers.length > 0 ? Math.max(...completedStepNumbers) : 0
 
         // Current step is max completed step + 1
         const userCurrentStep = maxCompletedStep + 1
 
-        console.log("[v0] Max completed step:", maxCompletedStep, "Current step:", userCurrentStep)
+        console.log(
+          "[v0] Steps from latest execution:",
+          steps,
+          "Completed steps:",
+          completedStepNumbers,
+          "Max completed step:",
+          maxCompletedStep,
+          "Current step:",
+          userCurrentStep,
+        )
 
         setCurrentStep(userCurrentStep)
         setLatestExecutionId(latestExecution.id)
