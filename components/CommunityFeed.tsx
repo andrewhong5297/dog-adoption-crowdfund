@@ -30,52 +30,27 @@ export function CommunityFeed() {
       setLoading(true)
       setError(null)
 
-      const donateResponse = await fetch("https://trails-api.herd.eco/v1/read", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Herd-Trail-App-Id": "0198c2df-d48c-7f25-aae1-873d55126415",
-        },
-        body: JSON.stringify({
-          nodeId: "0198c2e0-a2e9-7497-8e7e-9e8feb56f554", // donate read node
-          walletAddress: "0x0000000000000000000000000000000000000000",
-          execution: { type: "new" },
-        }),
-      })
-
-      if (!donateResponse.ok) {
-        throw new Error(`HTTP error! status: ${donateResponse.status}`)
-      }
-
-      const donateData = await donateResponse.json()
-
-      // Get execution history to match donations with transaction data
       const executionsResponse = await TrailAPI.queryExecutions({ walletAddresses: [] })
 
-      const donationAmounts = donateData.outputs?.arg_0 || []
-      const donationWallets = donateData.outputs?.arg_1 || []
+      // Get donation transactions from totals.stepStats[2]
+      const donationTransactions = executionsResponse.totals?.stepStats?.[2]?.transactionHashes || []
 
-      // Get step 2 (donate) transactions from execution history
-      const donateTransactions = executionsResponse.totals.stepStats?.["2"]?.transactionHashes || []
+      console.log("[v0] Found donate transactions from stepStats[2]:", donationTransactions.length)
 
-      const combinedDonations: DonationData[] = donateTransactions
-        .map((tx, index) => {
-          const walletIndex = donationWallets.findIndex(
-            (wallet: string) => wallet.toLowerCase() === tx.walletAddress.toLowerCase(),
-          )
-
-          return {
-            walletAddress: tx.walletAddress,
-            amount: walletIndex >= 0 ? donationAmounts[walletIndex] : "0",
-            txHash: tx.txHash,
-            blockTimestamp: tx.blockTimestamp,
-            farcasterData: tx.farcasterData,
-          }
-        })
-        .filter((donation) => donation.amount !== "0")
+      // Map the transactions to our donation format - amounts are already in evaluation.finalInputValues
+      const donations: DonationData[] = donationTransactions
+        .map((tx: any) => ({
+          walletAddress: tx.walletAddress,
+          amount: tx.evaluation?.finalInputValues?.amount || "0",
+          txHash: tx.txHash,
+          blockTimestamp: tx.blockTimestamp,
+          farcasterData: tx.farcasterData,
+        }))
+        .filter((donation: DonationData) => donation.amount !== "0")
         .sort((a, b) => b.blockTimestamp - a.blockTimestamp)
 
-      setDonations(combinedDonations)
+      console.log("[v0] Valid donations with amounts:", donations.length)
+      setDonations(donations)
     } catch (error) {
       console.error("Failed to fetch donation data:", error)
       setError(error instanceof Error ? error.message : "Failed to load donation data")
@@ -191,7 +166,7 @@ export function CommunityFeed() {
                     )}
                     <Badge variant="secondary" className="bg-green-100 text-green-800 font-semibold">
                       <DollarSign className="w-3 h-3 mr-1" />
-                      {formatUSDC(donation.amount)}
+                      {donation.amount}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-gray-500">

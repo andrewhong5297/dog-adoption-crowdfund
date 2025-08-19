@@ -9,6 +9,7 @@ import { Label } from "./ui/label"
 import { CheckCircle, DollarSign, Shield } from "lucide-react"
 import { useUserStepFromLatestExecution } from "../hooks/use-user-step"
 import { useTransaction } from "../hooks/use-transaction"
+import { useToast } from "../hooks/use-toast"
 
 interface ApproveDonateStepProps {
   onComplete: () => void
@@ -18,6 +19,7 @@ export function ApproveDonateStep({ onComplete }: ApproveDonateStepProps) {
   const { address } = useAccount()
   const { currentStep, refetch: refetchStep } = useUserStepFromLatestExecution()
   const { executeTransaction, isLoading, error } = useTransaction()
+  const { toast } = useToast()
   const [amount, setAmount] = useState("")
   const [balance, setBalance] = useState<number | null>(null)
 
@@ -109,6 +111,11 @@ export function ApproveDonateStep({ onComplete }: ApproveDonateStepProps) {
         userInputs: { amount: Number.parseFloat(amount) },
         walletAddress: address,
       })
+      toast({
+        title: "Thanks for helping out the dogs of brooklyn!",
+        description: `Your donation of ${amount} USDC will help save lives at Brooklyn ACC.`,
+        duration: 5000,
+      })
       await fetchBalance()
       await refetchStep()
       onComplete()
@@ -155,7 +162,11 @@ export function ApproveDonateStep({ onComplete }: ApproveDonateStepProps) {
           <Button
             onClick={handleApprove}
             disabled={!isReady || !enoughBalance}
-            className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white"
+            className={`flex-1 text-white transition-all duration-200 ${
+              hasCompletedApproval
+                ? "bg-yellow-400 hover:bg-yellow-600 opacity-60 hover:opacity-100"
+                : "bg-yellow-600 hover:bg-yellow-700"
+            }`}
           >
             {hasCompletedApproval ? (
               <>
@@ -191,14 +202,6 @@ export function ApproveDonateStep({ onComplete }: ApproveDonateStepProps) {
         </div>
 
         {/* Status Messages */}
-        {hasCompletedApproval && !hasCompletedDonation && (
-          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-sm text-green-800">
-              ✅ Approval complete! Now click "Donate" to send your contribution.
-            </p>
-          </div>
-        )}
-
         {error && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-sm text-red-800">{error}</p>

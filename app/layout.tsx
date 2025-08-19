@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import "./globals.css"
+import { Toaster } from "../components/Toaster"
 
 const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000"
 
@@ -80,7 +81,11 @@ html {
 }
         `}</style>
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* Toaster component for toast notifications */}
+        <Toaster />
+      </body>
     </html>
   )
 }

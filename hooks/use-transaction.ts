@@ -156,12 +156,20 @@ export function useTransaction() {
 
         console.log(`[v0] Transaction submitted with hash:`, txHash)
 
+        const nodeId =
+          stepNumber === 1 ? "0198c2e0-a2e8-7a99-82e7-7514211a187f" : "0198c2e0-a2e7-7c59-a3a2-76c5dfa3cc33"
+        console.log(`[v0] Saving execution for step ${stepNumber} with nodeId:`, nodeId)
+        console.log(`[v0] Transaction hash:`, txHash)
+        console.log(`[v0] Wallet address:`, walletAddress)
+
         await TrailAPI.saveExecution({
-          nodeId: stepNumber === 1 ? "0198c2e0-a2e8-7a99-82e7-7514211a187f" : "0198c2e0-a2e7-7c59-a3a2-76c5dfa3cc33",
+          nodeId,
           transactionHash: txHash,
           walletAddress,
           execution: { type: "new" },
         })
+
+        console.log(`[v0] Successfully saved execution for step ${stepNumber}`)
 
         return txHash
       } catch (error) {
