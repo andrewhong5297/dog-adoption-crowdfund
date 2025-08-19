@@ -5,7 +5,7 @@ import { GeistMono } from "geist/font/mono"
 import "./globals.css"
 import { Toaster } from "../components/Toaster"
 
-const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000"
+const baseUrl = "https://v0-dog-crowdfund-app.vercel.app"
 
 const frameEmbed = {
   version: "next",
@@ -50,9 +50,6 @@ export const metadata: Metadata = {
     description: "Help save dogs at Brooklyn Animal Care Centers through community-driven crowdfunding",
     images: ["/api/og/image"],
   },
-  other: {
-    "fc:frame": JSON.stringify(frameEmbed),
-  },
 }
 
 export default function RootLayout({
@@ -64,10 +61,6 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="fc:frame" content={JSON.stringify(frameEmbed)} />
-
-        {/* Miniapp specific meta tags */}
-        <meta name="fc:frame:image:aspect_ratio" content="1.91:1" />
-        <meta name="fc:frame:input:text" content="Enter donation amount" />
 
         {/* PWA and mobile optimization */}
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
