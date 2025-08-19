@@ -61,7 +61,7 @@ export function ApproveDonateStep({ approveStatus, donateStatus, onComplete }: A
       const balanceValue = Number.parseInt(data.outputs.arg_0.value) / 1000000 // Convert from wei to USDC (6 decimals)
       console.log("[v0] Parsed balance value:", balanceValue)
 
-      setBalance(balanceValue)
+      setBalance(balanceValue.toFixed(2))
     } catch (error) {
       console.error("Failed to fetch balance:", error)
       setBalance(0)
