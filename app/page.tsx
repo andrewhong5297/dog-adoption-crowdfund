@@ -14,7 +14,7 @@ import { Heart } from "lucide-react"
 const AppContent = () => {
   const [isAppReady, setIsAppReady] = useState(false)
   const { address, status } = useAccount()
-  const { currentStep, refetch } = useTrail()
+  const { currentStep, hasCompletedApproval, hasCompletedDonation, refetch } = useTrail()
   const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -37,13 +37,6 @@ const AppContent = () => {
       return () => clearTimeout(timer)
     }
   }, [isAppReady])
-
-  const getStepStatus = (stepNumber: number) => {
-    if (!address) return "disabled"
-    if (stepNumber < currentStep) return "completed"
-    if (stepNumber === currentStep) return "current"
-    return "pending"
-  }
 
   const handleStepComplete = () => {
     refetch()
@@ -74,11 +67,7 @@ const AppContent = () => {
         </div>
 
         <div className="space-y-6">
-          <ApproveDonateStep
-            approveStatus={address ? getStepStatus(1) : "disabled"}
-            donateStatus={address ? getStepStatus(2) : "disabled"}
-            onComplete={handleStepComplete}
-          />
+          <ApproveDonateStep onComplete={handleStepComplete} />
 
           <CommunityFeed />
         </div>

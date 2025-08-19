@@ -9,15 +9,12 @@ import { Label } from "./ui/label"
 import { CheckCircle, DollarSign, Shield } from "lucide-react"
 import { useTrail } from "../hooks/use-trail"
 import { useTransaction } from "../hooks/use-transaction"
-import { formatUSDC } from "../lib/trail-api"
 
 interface ApproveDonateStepProps {
-  approveStatus: "disabled" | "current" | "completed" | "pending"
-  donateStatus: "disabled" | "current" | "completed" | "pending"
   onComplete: () => void
 }
 
-export function ApproveDonateStep({ approveStatus, donateStatus, onComplete }: ApproveDonateStepProps) {
+export function ApproveDonateStep({ onComplete }: ApproveDonateStepProps) {
   const { address } = useAccount()
   const trail = useTrail()
   const { executeTransaction, isLoading, error } = useTransaction()
@@ -93,6 +90,7 @@ export function ApproveDonateStep({ approveStatus, donateStatus, onComplete }: A
         walletAddress: address,
       })
       await fetchBalance()
+      await trail.refetch()
       onComplete()
     } catch (error) {
       console.error("Approve failed:", error)
@@ -109,15 +107,19 @@ export function ApproveDonateStep({ approveStatus, donateStatus, onComplete }: A
         walletAddress: address,
       })
       await fetchBalance()
+      await trail.refetch()
       onComplete()
     } catch (error) {
       console.error("Donate failed:", error)
     }
   }
 
-  const isApproveDisabled = approveStatus === "disabled" || isLoading
-  const isDonateDisabled = donateStatus === "disabled" || approveStatus !== "completed" || isLoading
-  const isAmountValid = amount && Number.parseFloat(amount) > 0 && Number.parseFloat(amount) <= (balance || 0)
+  const canApprove =
+    !isLoading && amount && Number.parseFloat(amount) > 0 && Number.parseFloat(amount) <= (balance || 0)
+  const canDonate = !isLoading && amount && Number.parseFloat(amount) > 0 && Number.parseFloat(amount) <= (balance || 0)
+
+  // User can always re-approve, but donate requires approval first (unless they already completed approval)
+  const isDonateDisabled = !canDonate || (!trail.hasCompletedApproval && !isLoading)
 
   return (
     <Card className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
@@ -139,10 +141,10 @@ export function ApproveDonateStep({ approveStatus, donateStatus, onComplete }: A
             placeholder="Enter amount"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            disabled={isApproveDisabled}
+            disabled={isLoading}
             className="text-lg"
           />
-          <p className="text-xs text-gray-600">Available: {balance} USDC</p>
+          <p className="text-xs text-gray-600">Available: {balance || 0} USDC</p>
         </div>
 
         {/* Action Buttons */}
@@ -150,13 +152,13 @@ export function ApproveDonateStep({ approveStatus, donateStatus, onComplete }: A
           {/* Approve Button */}
           <Button
             onClick={handleApprove}
-            disabled={isApproveDisabled || !isAmountValid}
+            disabled={!canApprove}
             className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white"
           >
-            {approveStatus === "completed" ? (
+            {trail.hasCompletedApproval ? (
               <>
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Approved
+                Re-approve
               </>
             ) : (
               <>
@@ -169,10 +171,10 @@ export function ApproveDonateStep({ approveStatus, donateStatus, onComplete }: A
           {/* Donate Button */}
           <Button
             onClick={handleDonate}
-            disabled={isDonateDisabled || !isAmountValid}
+            disabled={isDonateDisabled}
             className="flex-1 bg-green-600 hover:bg-green-700 text-white"
           >
-            {donateStatus === "completed" ? (
+            {trail.hasCompletedDonation ? (
               <>
                 <CheckCircle className="w-4 h-4 mr-2" />
                 Donated
@@ -187,7 +189,7 @@ export function ApproveDonateStep({ approveStatus, donateStatus, onComplete }: A
         </div>
 
         {/* Status Messages */}
-        {approveStatus === "completed" && donateStatus !== "completed" && (
+        {trail.hasCompletedApproval && !trail.hasCompletedDonation && (
           <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-sm text-green-800">
               ✅ Approval complete! Now click "Donate" to send your contribution.
@@ -201,7 +203,7 @@ export function ApproveDonateStep({ approveStatus, donateStatus, onComplete }: A
           </div>
         )}
 
-        {!isAmountValid && amount && (
+        {!canApprove && amount && (
           <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
             <p className="text-sm text-orange-800">Please enter a valid amount between 0 and your available balance.</p>
           </div>

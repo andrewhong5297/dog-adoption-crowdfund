@@ -9,6 +9,9 @@ export interface TrailState {
   executions: ExecutionQueryResponse | null
   loading: boolean
   error: string | null
+  hasCompletedApproval: boolean
+  hasCompletedDonation: boolean
+  latestExecutionId: string | null
 }
 
 export function useTrail() {
@@ -18,6 +21,9 @@ export function useTrail() {
     executions: null,
     loading: false,
     error: null,
+    hasCompletedApproval: false,
+    hasCompletedDonation: false,
+    latestExecutionId: null,
   })
 
   // Fetch execution history
@@ -33,7 +39,6 @@ export function useTrail() {
 
       setState((prev) => ({ ...prev, executions, loading: false }))
 
-      // Determine current step based on execution history
       const userExecution = executions.walletExecutions.find(
         (exec) => exec.walletAddress.toLowerCase() === address.toLowerCase(),
       )
@@ -44,8 +49,35 @@ export function useTrail() {
           (step) =>
             step.stepNumber > 0 && step.txHash !== "0x0000000000000000000000000000000000000000000000000000000000000000",
         )
-        const nextStep = Math.min(completedSteps.length + 1, 3)
-        setState((prev) => ({ ...prev, currentStep: nextStep }))
+
+        // Check which steps have been completed
+        const hasCompletedApproval = completedSteps.some((step) => step.stepNumber === 1)
+        const hasCompletedDonation = completedSteps.some((step) => step.stepNumber === 2)
+
+        // Current step is the next step they need to complete
+        let currentStep = 1
+        if (hasCompletedApproval && !hasCompletedDonation) {
+          currentStep = 2
+        } else if (hasCompletedApproval && hasCompletedDonation) {
+          currentStep = 3 // All done
+        }
+
+        setState((prev) => ({
+          ...prev,
+          currentStep,
+          hasCompletedApproval,
+          hasCompletedDonation,
+          latestExecutionId: latestExecution.id,
+        }))
+      } else {
+        // No executions yet, reset to initial state
+        setState((prev) => ({
+          ...prev,
+          currentStep: 1,
+          hasCompletedApproval: false,
+          hasCompletedDonation: false,
+          latestExecutionId: null,
+        }))
       }
     } catch (error) {
       console.error("Failed to fetch executions:", error)
@@ -70,6 +102,9 @@ export function useTrail() {
         executions: null,
         loading: false,
         error: null,
+        hasCompletedApproval: false,
+        hasCompletedDonation: false,
+        latestExecutionId: null,
       })
     }
   }, [address, fetchExecutions])
