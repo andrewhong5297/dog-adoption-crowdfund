@@ -56,7 +56,7 @@ const AppContent = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <PawPrintIcon className="w-6 h-6 text-amber-600" />
-              <h1 className="text-lg font-bold text-amber-900">Save Brooklyn ACC Dogs</h1>
+              <h1 className="text-lg font-bold text-amber-900">Save Brooklyn Dogs</h1>
             </div>
             <FarcasterConnect />
           </div>

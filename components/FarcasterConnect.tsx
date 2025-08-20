@@ -48,7 +48,7 @@ export function FarcasterConnect() {
           className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
         >
           <Wallet className="w-4 h-4" />
-          <span className="text-sm">Connect Farcaster</span>
+          <span className="text-sm">Connect</span>
         </button>
       )}
     </div>
