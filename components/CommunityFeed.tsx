@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import { Heart, DollarSign, ExternalLink, RefreshCw } from "lucide-react"
-import { TrailAPI, formatTimestamp, formatUSDC } from "../lib/trail-api"
+import { TrailAPI, formatTimestamp } from "../lib/trail-api"
 
 interface DonationData {
   walletAddress: string
@@ -20,7 +20,7 @@ interface DonationData {
   }
 }
 
-export function CommunityFeed() {
+export function CommunityFeed({ onRefresh }: { onRefresh?: () => void }) {
   const [donations, setDonations] = useState<DonationData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -61,7 +61,17 @@ export function CommunityFeed() {
 
   useEffect(() => {
     fetchDonationData()
+
+    const refreshInterval = setInterval(fetchDonationData, 60000) // 60 seconds
+
+    return () => clearInterval(refreshInterval)
   }, [])
+
+  useEffect(() => {
+    if (onRefresh) {
+      fetchDonationData()
+    }
+  }, [onRefresh])
 
   if (loading) {
     return (

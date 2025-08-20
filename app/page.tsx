@@ -16,6 +16,7 @@ const AppContent = () => {
   const { address, status } = useAccount()
   const { currentStep, hasCompletedApproval, hasCompletedDonation, refetch } = useTrail()
   const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   useEffect(() => {
     if (!isAppReady) {
@@ -40,6 +41,7 @@ const AppContent = () => {
 
   const handleStepComplete = () => {
     refetch()
+    setRefreshTrigger((prev) => prev + 1)
   }
 
   const handleSelectExecution = (executionId: string) => {
@@ -63,13 +65,13 @@ const AppContent = () => {
 
       <div className="max-w-md mx-auto px-4 py-6">
         <div className="mb-6">
-          <CrowdfundProgress />
+          <CrowdfundProgress onRefresh={refreshTrigger} />
         </div>
 
         <div className="space-y-6">
           <ApproveDonateStep onComplete={handleStepComplete} />
 
-          <CommunityFeed />
+          <CommunityFeed onRefresh={refreshTrigger} />
         </div>
       </div>
 

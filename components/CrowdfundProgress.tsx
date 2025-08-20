@@ -17,7 +17,7 @@ interface CrowdfundData {
   cancelled: boolean
 }
 
-export function CrowdfundProgress() {
+export function CrowdfundProgress({ onRefresh }: { onRefresh?: () => void }) {
   const [crowdfundData, setCrowdfundData] = useState<CrowdfundData | null>(null)
   const [donorCount, setDonorCount] = useState<number>(0)
   const [loading, setLoading] = useState(true)
@@ -92,7 +92,84 @@ export function CrowdfundProgress() {
     }
 
     fetchCrowdfundData()
+
+    const refreshInterval = setInterval(fetchCrowdfundData, 60000) // 60 seconds
+
+    return () => clearInterval(refreshInterval)
   }, [])
+
+  useEffect(() => {
+    if (onRefresh) {
+      const fetchCrowdfundData = async () => {
+        try {
+          setLoading(true)
+
+          // Read crowdfund details using null address (works without wallet connection)
+          const crowdfundResponse = await fetch(
+            `https://trails-api.herd.eco/v1/trails/0198c2e0-a2d8-76d3-bfe1-3c9191ebd378/versions/0198c2e0-a2e1-79cb-9c8f-1ea675b21ce7/nodes/0198c2e0-a2e8-7a99-82e7-7515c48438b0/read`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Herd-Trail-App-Id": "0198c2df-d48c-7f25-aae1-873d55126415",
+              },
+              body: JSON.stringify({
+                walletAddress: "0x0000000000000000000000000000000000000000",
+                userInputs: {},
+                execution: {
+                  type: "new",
+                },
+              }),
+            },
+          )
+
+          // Read donor count using null address
+          const donorResponse = await fetch(
+            `https://trails-api.herd.eco/v1/trails/0198c2e0-a2d8-76d3-bfe1-3c9191ebd378/versions/0198c2e0-a2e1-79cb-9c8f-1ea675b21ce7/nodes/0198c2e0-a2e9-7497-8e7e-9e8feb56f554/read`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Herd-Trail-App-Id": "0198c2df-d48c-7f25-aae1-873d55126415",
+              },
+              body: JSON.stringify({
+                walletAddress: "0x0000000000000000000000000000000000000000",
+                userInputs: {},
+                execution: {
+                  type: "new",
+                },
+              }),
+            },
+          )
+
+          if (!crowdfundResponse.ok || !donorResponse.ok) {
+            throw new Error(`HTTP error! status: ${crowdfundResponse.status} / ${donorResponse.status}`)
+          }
+
+          const crowdfundData = await crowdfundResponse.json()
+          const donorData = await donorResponse.json()
+
+          const processedCrowdfundData: CrowdfundData = {
+            goal: crowdfundData.outputs.goal.value,
+            totalRaised: crowdfundData.outputs.totalRaised.value,
+            endTimestamp: Number.parseInt(crowdfundData.outputs.endTimestamp.value),
+            creator: crowdfundData.outputs.creator.value,
+            fundsClaimed: crowdfundData.outputs.fundsClaimed.value,
+            cancelled: crowdfundData.outputs.cancelled.value,
+          }
+
+          setCrowdfundData(processedCrowdfundData)
+          setDonorCount(Number.parseInt(donorData.outputs.arg_0.value))
+        } catch (error) {
+          console.error("Failed to fetch crowdfund data:", error)
+        } finally {
+          setLoading(false)
+        }
+      }
+
+      fetchCrowdfundData()
+    }
+  }, [onRefresh])
 
   useEffect(() => {
     if (!crowdfundData) return
