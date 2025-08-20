@@ -45,7 +45,7 @@ export function FarcasterConnect() {
       ) : (
         <button
           onClick={() => connect({ connector: config.connectors[0] })}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
         >
           <Wallet className="w-4 h-4" />
           <span className="text-sm">Connect Farcaster</span>
