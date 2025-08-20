@@ -9,7 +9,7 @@ import { CommunityFeed } from "../components/CommunityFeed"
 import { sdk } from "@farcaster/frame-sdk"
 import { useAccount } from "wagmi"
 import { useTrail } from "../hooks/use-trail"
-import { Heart } from "lucide-react"
+import { PawPrintIcon } from "lucide-react"
 
 const AppContent = () => {
   const [isAppReady, setIsAppReady] = useState(false)
@@ -50,19 +50,18 @@ const AppContent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-      <div className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
+      <div className="bg-white shadow-sm border-b border-orange-100">
         <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Heart className="w-6 h-6 text-red-500" />
-              <h1 className="text-lg font-bold text-gray-900">Brooklyn ACC Dogs</h1>
+              <PawPrintIcon className="w-6 h-6 text-amber-600" />
+              <h1 className="text-lg font-bold text-amber-900">Save Brooklyn ACC Dogs</h1>
             </div>
             <FarcasterConnect />
           </div>
         </div>
       </div>
-
       <div className="max-w-md mx-auto px-4 py-6">
         <div className="mb-6">
           <CrowdfundProgress onRefresh={refreshTrigger} />
@@ -74,9 +73,10 @@ const AppContent = () => {
           <CommunityFeed onRefresh={refreshTrigger} />
         </div>
       </div>
-
-      <div className="fixed bottom-0 left-0 right-0 bg-gray-900 text-white text-center py-2">
-        <p className="text-xs">Powered by Herd</p>
+      <div className="fixed bottom-0 left-0 right-0 bg-amber-900 text-amber-50 text-center py-2">
+        <a href="https://herd.eco/trails/0198c2e0-a2d8-76d3-bfe1-3c9191ebd378/overlook" target="_blank" className="flex items-center justify-center gap-1">
+          <p className="text-xs">Powered by Herd</p>
+        </a>
       </div>
     </div>
   )

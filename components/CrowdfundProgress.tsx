@@ -3,10 +3,8 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { Progress } from "./ui/progress"
-import { Target, Clock, Users } from "lucide-react"
+import { Clock, Users, Target } from "lucide-react"
 import { formatUSDC } from "../lib/trail-api"
-
-// API documentation: https://trails-api.herd.eco/v1/trails/0198c2e0-a2d8-76d3-bfe1-3c9191ebd378/versions/0198c2e0-a2e1-79cb-9c8f-1ea675b21ce7/guidebook.txt?trailAppId=0198a42e-6183-745a-abca-cb89fd695d50
 
 interface CrowdfundData {
   goal: string
@@ -233,41 +231,46 @@ export function CrowdfundProgress({ onRefresh }: { onRefresh?: () => void }) {
   const isSuccessful = raisedAmount >= goalAmount && !crowdfundData.cancelled
 
   return (
-    <Card>
+    <Card className="border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Target className="w-5 h-5 text-blue-600" />
-          Brooklyn ACC Dog Crowdfund
-        </CardTitle>
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <CardTitle className="text-xl font-bold text-center text-amber-900">
+            Donate to Raise Funds for Dog Care
+          </CardTitle>
+        </div>
+        <p className="text-sm text-amber-700 text-center mb-4">
+          Contributions will go towards the Brooklyn Animal Care Center, where I initially adopted my beagle Mochi ten
+          years ago. Any and all donations are appreciated!
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Progress Bar */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Progress</span>
-            <span className="font-medium">{progressPercentage.toFixed(1)}%</span>
+            <span className="text-amber-700">Progress</span>
+            <span className="font-medium text-amber-900">{progressPercentage.toFixed(1)}%</span>
           </div>
-          <Progress value={Math.min(progressPercentage, 100)} className="h-3" />
+          <Progress value={Math.min(progressPercentage, 100)} className="h-3 bg-amber-100" />
           <div className="flex justify-between text-sm">
-            <span className="font-medium">${raisedAmount.toLocaleString()}</span>
-            <span className="text-gray-600">of ${goalAmount.toLocaleString()} goal</span>
+            <span className="font-medium text-amber-900">${raisedAmount.toLocaleString()}</span>
+            <span className="text-amber-700">of ${goalAmount.toLocaleString()} goal</span>
           </div>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
-            <Users className="w-4 h-4 text-purple-600" />
+          <div className="flex items-center gap-2 p-3 bg-orange-100 rounded-lg border border-orange-200">
+            <Users className="w-4 h-4 text-orange-600" />
             <div>
-              <p className="text-xs text-gray-600">Donors</p>
-              <p className="font-semibold">{donorCount}</p>
+              <p className="text-xs text-orange-700">Donors</p>
+              <p className="font-semibold text-orange-900">{donorCount}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
-            <Clock className="w-4 h-4 text-green-600" />
+          <div className="flex items-center gap-2 p-3 bg-amber-100 rounded-lg border border-amber-200">
+            <Clock className="w-4 h-4 text-amber-600" />
             <div>
-              <p className="text-xs text-gray-600">Time Left</p>
-              <p className="font-semibold text-xs">{timeLeft}</p>
+              <p className="text-xs text-amber-700">Time Left</p>
+              <p className="font-semibold text-xs text-amber-900">{timeLeft}</p>
             </div>
           </div>
         </div>
@@ -275,9 +278,15 @@ export function CrowdfundProgress({ onRefresh }: { onRefresh?: () => void }) {
         {/* Status Badge */}
         <div className="flex justify-center">
           {isSuccessful ? (
-            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">Goal Reached!</div>
+            <div className="bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-medium border border-green-200 flex items-center gap-1">
+              <Target className="w-4 h-4" />
+              Goal Reached! 🐕
+            </div>
           ) : isActive ? (
-            <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">Active Campaign</div>
+            <div className="bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-medium border border-amber-200 flex items-center gap-1">
+              <Target className="w-4 h-4" />
+              Active Campaign 🐾
+            </div>
           ) : null}
         </div>
       </CardContent>

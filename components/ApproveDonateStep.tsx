@@ -6,16 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Label } from "./ui/label"
-import { CheckCircle, DollarSign, Shield } from "lucide-react"
+import { CheckCircle, Shield, Heart, DollarSign } from "lucide-react"
 import { useUserStepFromLatestExecution } from "../hooks/use-user-step"
 import { useTransaction } from "../hooks/use-transaction"
 import { useToast } from "../hooks/use-toast"
 
-interface ApproveDonateStepProps {
-  onComplete: () => void
-}
-
-export function ApproveDonateStep({ onComplete }: ApproveDonateStepProps) {
+export function ApproveDonateStep({ onComplete }: { onComplete: () => void }) {
   const { address } = useAccount()
   const { currentStep, refetch: refetchStep } = useUserStepFromLatestExecution()
   const { executeTransaction, isLoading, error } = useTransaction()
@@ -131,17 +127,17 @@ export function ApproveDonateStep({ onComplete }: ApproveDonateStepProps) {
   const isDonateDisabled = !isReady || !enoughBalance || (!hasCompletedApproval && !isLoading)
 
   return (
-    <Card className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
+    <Card className="border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-red-50">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <DollarSign className="w-5 h-5 text-blue-600" />
+        <CardTitle className="flex items-center gap-2 text-lg text-orange-900">
+          <DollarSign className="w-5 h-5 text-orange-600" />
           Make a Donation
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Amount Input */}
         <div className="space-y-2">
-          <Label htmlFor="amount" className="text-sm font-medium">
+          <Label htmlFor="amount" className="text-sm font-medium text-orange-800">
             Donation Amount (USDC)
           </Label>
           <Input
@@ -151,9 +147,9 @@ export function ApproveDonateStep({ onComplete }: ApproveDonateStepProps) {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             disabled={isLoading}
-            className="text-lg"
+            className="text-lg border-orange-200 focus:border-orange-400"
           />
-          <p className="text-xs text-gray-600">Available: {balance || 0} USDC</p>
+          <p className="text-xs text-orange-700">Available: {balance || 0} USDC</p>
         </div>
 
         {/* Action Buttons */}
@@ -164,8 +160,8 @@ export function ApproveDonateStep({ onComplete }: ApproveDonateStepProps) {
             disabled={!isReady || !enoughBalance}
             className={`flex-1 text-white transition-all duration-200 ${
               hasCompletedApproval
-                ? "bg-yellow-400 hover:bg-yellow-600 opacity-60 hover:opacity-100"
-                : "bg-yellow-600 hover:bg-yellow-700"
+                ? "bg-amber-400 hover:bg-amber-600 opacity-60 hover:opacity-100"
+                : "bg-amber-600 hover:bg-amber-700"
             }`}
           >
             {hasCompletedApproval ? (
@@ -185,16 +181,16 @@ export function ApproveDonateStep({ onComplete }: ApproveDonateStepProps) {
           <Button
             onClick={handleDonate}
             disabled={isDonateDisabled}
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+            className="flex-1 bg-red-500 hover:bg-red-600 text-white"
           >
             {hasCompletedDonation ? (
               <>
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Donated
+                Donated ❤️
               </>
             ) : (
               <>
-                <DollarSign className="w-4 h-4 mr-2" />
+                <Heart className="w-4 h-4 mr-2" />
                 {isLoading ? "Donating..." : "2. Donate"}
               </>
             )}
